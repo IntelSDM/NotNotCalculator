@@ -1,4 +1,4 @@
-Microsoft (R) Macro Assembler Version 14.29.30148.0	    08/06/23 12:06:06
+Microsoft (R) Macro Assembler Version 14.29.30148.0	    08/06/23 13:46:55
 Main.asm						     Page 1 - 1
 
 
@@ -43,9 +43,9 @@ Main.asm						     Page 1 - 1
 	   6E 64 20 4E 75
 	   6D 62 65 72 3A
 	   20 00
- 00000059 52 65 73 75 6C	ResultMessage BYTE "Result:",0
-	   74 3A 00
- 00000061 46 69 72 73 74	SubtractionErrorMessage BYTE "First Number Is Greater Than Second Number. Retry with a correct number combination.",0
+ 00000059 52 65 73 75 6C	ResultMessage BYTE "Result: ",0
+	   74 3A 20 00
+ 00000062 46 69 72 73 74	SubtractionErrorMessage BYTE "First Number Is Greater Than Second Number. Retry with a correct number combination.",0
 	   20 4E 75 6D 62
 	   65 72 20 49 73
 	   20 47 72 65 61
@@ -62,6 +62,22 @@ Main.asm						     Page 1 - 1
 	   72 20 63 6F 6D
 	   62 69 6E 61 74
 	   69 6F 6E 2E 00
+ 000000B7 53 65 63 6F 6E	DivisionErrorMessage BYTE "Second Number Is 0. Retry with a correct number combination.",0
+	   64 20 4E 75 6D
+	   62 65 72 20 49
+	   73 20 30 2E 20
+	   52 65 74 72 79
+	   20 77 69 74 68
+	   20 61 20 63 6F
+	   72 72 65 63 74
+	   20 6E 75 6D 62
+	   65 72 20 63 6F
+	   6D 62 69 6E 61
+	   74 69 6F 6E 2E
+	   00
+ 000000F4 52 65 6D 61 69	RemainderMessage Byte "Remainder: ",0
+	   6E 64 65 72 3A
+	   20 00
  00000000			.code
  00000000			main PROC
  00000000  B8 00000009		    mov eax, 9h ; Blue text
@@ -101,41 +117,77 @@ Main.asm						     Page 1 - 1
 				    ; Operator Handler
 				    ; Just compare text to our operators, otherwise kill program
  0000005B  80 FB 2B		    cmp bl, '+'
- 0000005E  74 07		    je AddNumbers
+ 0000005E  74 14		    je AddNumbers
  00000060  80 FB 2D		    cmp bl, '-'
- 00000063  74 06		    je SubtractNumbers
- 00000065  EB 31		    jmp ExitProgram 
+ 00000063  74 13		    je SubtractNumbers
+ 00000065  80 FB 2A		    cmp bl, '*'
+ 00000068  74 14		    je MultiplyNumbers
+ 0000006A  80 FB 2F		    cmp bl, '/'
+ 0000006D  74 14		    je DivideNumbers
+ 0000006F  E9 0000008D		    jmp ExitProgram 
 
- 00000067			AddNumbers:
- 00000067  03 CA		    add ecx, edx
- 00000069  EB 17		    jmp Result
+ 00000074			AddNumbers:
+ 00000074  03 CA		    add ecx, edx
+ 00000076  EB 73		    jmp Result
 
- 0000006B			SubtractNumbers:
- 0000006B  2B CA		    sub ecx, edx
- 0000006D  78 02		    js NegativeError   ; Jump to negative error if result is negative
- 0000006F  EB 11		    jmp Result
+ 00000078			SubtractNumbers:
+ 00000078  2B CA		    sub ecx, edx
+ 0000007A  78 47		    js SubtractionNegativeError   ; Jump to negative error if result is negative
+ 0000007C  EB 6D		    jmp Result
 
- 00000071			NegativeError:
- 00000071  BA 00000061 R	    mov edx, OFFSET SubtractionErrorMessage
- 00000076  E8 00000000 E	    call WriteString
- 0000007B  E8 00000000 E	    call Crlf ; New line
- 00000080  EB B7		    jmp Input1
+ 0000007E			MultiplyNumbers:
+ 0000007E  0F AF CA		    imul ecx, edx
+ 00000081  EB 68		    jmp Result
 
- 00000082			Result:
- 00000082  E8 00000000 E	    call Crlf ; New line
- 00000087  BA 00000059 R	    mov edx, OFFSET ResultMessage
- 0000008C  E8 00000000 E	    call WriteString
- 00000091  8B C1		    mov eax, ecx            ; ECX to EAX for writeint
- 00000093  E8 00000000 E	    call WriteInt
+ 00000083			DivideNumbers:
+ 00000083  8B C1		    mov eax, ecx 
+ 00000085  8B F2		    mov esi, edx
+ 00000087  BA 00000000		    mov edx, 0 ; clear edx, for some reason we cant use edx, must be clear
+ 0000008C  8B DE		    mov ebx, esi ; divisor
+ 0000008E  83 FE 00		    cmp esi, 0
+ 00000091  74 44		    je DivisionNegativeError
+ 00000093  F7 FB		    idiv ebx    ; eax = whole number, edx = remainder
+ 00000095  8B F2		    mov esi,edx ; store remainder from edx
 
- 00000098			ExitProgram:
+ 00000097  E8 00000000 E	    call Crlf ; New line
+ 0000009C  BA 00000059 R	    mov edx, OFFSET ResultMessage
+ 000000A1  E8 00000000 E	    call WriteString
+ 000000A6  E8 00000000 E	    call WriteInt ; full value is in eax
+
+ 000000AB  E8 00000000 E	    call Crlf ; New line
+ 000000B0  BA 000000F4 R	    mov edx, OFFSET RemainderMessage
+ 000000B5  E8 00000000 E	    call WriteString
+ 000000BA  8B C6		    mov eax, esi
+ 000000BC  E8 00000000 E	    call WriteInt
+ 000000C1  EB 3E		    jmp ExitProgram
+
+
+ 000000C3			SubtractionNegativeError:
+ 000000C3  BA 00000062 R	    mov edx, OFFSET SubtractionErrorMessage
+ 000000C8  E8 00000000 E	    call WriteString
+ 000000CD  E8 00000000 E	    call Crlf ; New line
+ 000000D2  E9 FFFFFF62		    jmp Input1
+
+ 000000D7			DivisionNegativeError:
+ 000000D7  BA 000000B7 R	    mov edx, OFFSET DivisionErrorMessage
+ 000000DC  E8 00000000 E	    call WriteString
+ 000000E1  E8 00000000 E	    call Crlf ; New line
+ 000000E6  E9 FFFFFF4E		    jmp Input1
+ 000000EB			Result:
+ 000000EB  E8 00000000 E	    call Crlf ; New line
+ 000000F0  BA 00000059 R	    mov edx, OFFSET ResultMessage
+ 000000F5  E8 00000000 E	    call WriteString
+ 000000FA  8B C1		    mov eax, ecx            ; ECX to EAX for writeint
+ 000000FC  E8 00000000 E	    call WriteInt
+
+ 00000101			ExitProgram:
 				    exit
- 00000098  6A 00	   *	    push   +000000000h
- 0000009A  E8 00000000 E   *	    call   ExitProcess
+ 00000101  6A 00	   *	    push   +000000000h
+ 00000103  E8 00000000 E   *	    call   ExitProcess
 
- 0000009F			main ENDP ; Clean up
+ 00000108			main ENDP ; Clean up
 				END main
-Microsoft (R) Macro Assembler Version 14.29.30148.0	    08/06/23 12:06:06
+Microsoft (R) Macro Assembler Version 14.29.30148.0	    08/06/23 13:46:55
 Main.asm						     Symbols 2 - 1
 
 
@@ -229,8 +281,8 @@ Segments and Groups:
 
 FLAT . . . . . . . . . . . . . .	GROUP
 STACK  . . . . . . . . . . . . .	32 Bit	 00001000 Para	  Stack	  'STACK'	 
-_DATA  . . . . . . . . . . . . .	32 Bit	 000000B6 Para	  Public  'DATA'	
-_TEXT  . . . . . . . . . . . . .	32 Bit	 0000009F Para	  Public  'CODE'	
+_DATA  . . . . . . . . . . . . .	32 Bit	 00000100 Para	  Public  'DATA'	
+_TEXT  . . . . . . . . . . . . .	32 Bit	 00000108 Para	  Public  'CODE'	
 
 
 Procedures, parameters, and locals:
@@ -337,15 +389,18 @@ WriteStackFrame  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 WriteString  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteToFile  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteWindowsMsg  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
-main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 0000009F Public STDCALL
+main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 00000108 Public STDCALL
   Operator . . . . . . . . . . .	L Near	 00000023 _TEXT	
   Input1 . . . . . . . . . . . .	L Near	 00000039 _TEXT	
   Input2 . . . . . . . . . . . .	L Near	 0000004A _TEXT	
-  AddNumbers . . . . . . . . . .	L Near	 00000067 _TEXT	
-  SubtractNumbers  . . . . . . .	L Near	 0000006B _TEXT	
-  NegativeError  . . . . . . . .	L Near	 00000071 _TEXT	
-  Result . . . . . . . . . . . .	L Near	 00000082 _TEXT	
-  ExitProgram  . . . . . . . . .	L Near	 00000098 _TEXT	
+  AddNumbers . . . . . . . . . .	L Near	 00000074 _TEXT	
+  SubtractNumbers  . . . . . . .	L Near	 00000078 _TEXT	
+  MultiplyNumbers  . . . . . . .	L Near	 0000007E _TEXT	
+  DivideNumbers  . . . . . . . .	L Near	 00000083 _TEXT	
+  SubtractionNegativeError . . .	L Near	 000000C3 _TEXT	
+  DivisionNegativeError  . . . .	L Near	 000000D7 _TEXT	
+  Result . . . . . . . . . . . .	L Near	 000000EB _TEXT	
+  ExitProgram  . . . . . . . . .	L Near	 00000101 _TEXT	
 printf . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 scanf  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 wsprintfA  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
@@ -371,6 +426,7 @@ CREATE_NEW . . . . . . . . . . .	Number	 00000001h
 CTRL_MASK  . . . . . . . . . . .	Number	 0000000Ch   
 CreateFile . . . . . . . . . . .	Text   	 CreateFileA
 DO_NOT_SHARE . . . . . . . . . .	Number	 00000000h   
+DivisionErrorMessage . . . . . .	Byte	 000000B7 _DATA	
 ENABLE_ECHO_INPUT  . . . . . . .	Number	 00000004h   
 ENABLE_LINE_INPUT  . . . . . . .	Number	 00000002h   
 ENABLE_MOUSE_INPUT . . . . . . .	Number	 00000010h   
@@ -476,6 +532,7 @@ RIGHT_ALT_PRESSED  . . . . . . .	Number	 00000001h
 RIGHT_CTRL_PRESSED . . . . . . .	Number	 00000004h   
 ReadConsoleInput . . . . . . . .	Text   	 ReadConsoleInputA
 ReadConsole  . . . . . . . . . .	Text   	 ReadConsoleA
+RemainderMessage . . . . . . . .	Byte	 000000F4 _DATA	
 ResultMessage  . . . . . . . . .	Byte	 00000059 _DATA	
 SCROLLLOCK_ON  . . . . . . . . .	Number	 00000040h   
 SHIFT_MASK . . . . . . . . . . .	Number	 00000010h   
@@ -485,7 +542,7 @@ STD_INPUT_HANDLE . . . . . . . .	Number	 -0000000Ah
 STD_OUTPUT_HANDLE  . . . . . . .	Number	 -0000000Bh   
 SecondInput  . . . . . . . . . .	Byte	 00000043 _DATA	
 SetConsoleTitle  . . . . . . . .	Text   	 SetConsoleTitleA
-SubtractionErrorMessage  . . . .	Byte	 00000061 _DATA	
+SubtractionErrorMessage  . . . .	Byte	 00000062 _DATA	
 TAB  . . . . . . . . . . . . . .	Number	 00000009h   
 TRUE . . . . . . . . . . . . . .	Number	 00000001h   
 TRUNCATE_EXISTING  . . . . . . .	Number	 00000005h   
