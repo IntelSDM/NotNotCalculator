@@ -1,4 +1,4 @@
-Microsoft (R) Macro Assembler Version 14.29.30148.0	    08/06/23 11:03:33
+Microsoft (R) Macro Assembler Version 14.29.30148.0	    08/06/23 11:54:28
 Main.asm						     Page 1 - 1
 
 
@@ -22,43 +22,81 @@ Main.asm						     Page 1 - 1
 			      C 
 
  00000000			.data
- 00000000  00000064 [		InputBuffer BYTE 100 DUP(0); 100 bytes for input storage
-	    00
-	   ]
 				; Output Messages:
- 00000064 4E 6F 74 20 4E	IntroMessage BYTE "Not Not Calculator:",10,10,0
+ 00000000 4E 6F 74 20 4E	IntroMessage BYTE "Not Not Calculator:",0
 	   6F 74 20 43 61
 	   6C 63 75 6C 61
-	   74 6F 72 3A 0A
-	   0A 00
- 0000007A 53 65 6C 65 63	OperatorSelection Byte "Select Operator(+,-,*,/):",0
+	   74 6F 72 3A 00
+ 00000014 53 65 6C 65 63	OperatorMessage BYTE "Select Operator(+,-,*,/):",0
 	   74 20 4F 70 65
 	   72 61 74 6F 72
 	   28 2B 2C 2D 2C
 	   2A 2C 2F 29 3A
 	   00
-
+ 0000002E 49 6E 70 75 74	FirstInput BYTE "Input First Number: ",0
+	   20 46 69 72 73
+	   74 20 4E 75 6D
+	   62 65 72 3A 20
+	   00
+ 00000043 49 6E 70 75 74	SecondInput BYTE "Input Second Number: ",0
+	   20 53 65 63 6F
+	   6E 64 20 4E 75
+	   6D 62 65 72 3A
+	   20 00
+ 00000059 52 65 73 75 6C	ResultMessage BYTE "Result:",0
+	   74 3A 00
  00000000			.code
  00000000			main PROC
-
  00000000  B8 00000009		    mov eax, 9h ; Blue text
  00000005  BB 00000000		    mov ebx, 0  ; Black background 
  0000000A  E8 00000000 E	    call SetTextColor 
 
-
- 0000000F  BA 00000064 R	    mov edx, OFFSET IntroMessage
+ 0000000F  BA 00000000 R	    mov edx, OFFSET IntroMessage
  00000014  E8 00000000 E	    call WriteString
- 00000019  BA 0000007A R	    mov edx, OFFSET OperatorSelection
- 0000001E  E8 00000000 E	    call WriteString
- 00000023  E8 00000000 E	    call ReadChar
+ 00000019  E8 00000000 E	    call Crlf
+ 0000001E  E8 00000000 E	    call Crlf
 
- 00000028  B8 00000007		    mov eax, 7   ; White text
- 0000002D  BB 00000000		    mov ebx, 0   ; Black background 
- 00000032  E8 00000000 E	    call SetTextColor
+				    ; Operator Input
+ 00000023  BA 00000014 R	    mov edx, OFFSET OperatorMessage
+ 00000028  E8 00000000 E	    call WriteString
+ 0000002D  E8 00000000 E	    call ReadChar
+ 00000032  8A D8		    mov bl, al              ; Operator in BL
+ 00000034  E8 00000000 E	    call Crlf  ; New line
 
- 00000037			main ENDP ; Clean up
+				    ;First Number Input
+ 00000039  BA 0000002E R	    mov edx, OFFSET FirstInput
+ 0000003E  E8 00000000 E	    call WriteString
+ 00000043  E8 00000000 E	    call ReadInt            ; Convert to int
+ 00000048  8B C8		    mov ecx, eax            ; Num 1 in ecx
+
+				    ; Second Number Input
+ 0000004A  BA 00000043 R	    mov edx, OFFSET SecondInput
+ 0000004F  E8 00000000 E	    call WriteString
+ 00000054  E8 00000000 E	    call ReadInt            ; Convert to int
+ 00000059  8B D0		    mov edx, eax            ; Num 2 in edx
+
+				    ; Operator Handler
+				    ; Just compare text to our operators, otherwise kill program
+ 0000005B  80 FB 2B		    cmp bl, '+'
+ 0000005E  74 02		    je AddNumbers
+ 00000060  EB 18		    jmp ExitProgram 
+
+ 00000062			AddNumbers:
+ 00000062  E8 00000000 E	    call Crlf ; new line
+ 00000067  03 CA		    add ecx, edx
+ 00000069  BA 00000059 R	    mov edx, OFFSET ResultMessage
+ 0000006E  E8 00000000 E	    call WriteString
+ 00000073  8B C1		    mov eax, ecx            ; ECX to EAX for writeint
+ 00000075  E8 00000000 E	    call WriteInt
+
+ 0000007A			ExitProgram:
+				    exit
+ 0000007A  6A 00	   *	    push   +000000000h
+ 0000007C  E8 00000000 E   *	    call   ExitProcess
+
+ 00000081			main ENDP ; Clean up
 				END main
-Microsoft (R) Macro Assembler Version 14.29.30148.0	    08/06/23 11:03:33
+Microsoft (R) Macro Assembler Version 14.29.30148.0	    08/06/23 11:54:28
 Main.asm						     Symbols 2 - 1
 
 
@@ -152,8 +190,8 @@ Segments and Groups:
 
 FLAT . . . . . . . . . . . . . .	GROUP
 STACK  . . . . . . . . . . . . .	32 Bit	 00001000 Para	  Stack	  'STACK'	 
-_DATA  . . . . . . . . . . . . .	32 Bit	 00000094 Para	  Public  'DATA'	
-_TEXT  . . . . . . . . . . . . .	32 Bit	 00000037 Para	  Public  'CODE'	
+_DATA  . . . . . . . . . . . . .	32 Bit	 00000061 Para	  Public  'DATA'	
+_TEXT  . . . . . . . . . . . . .	32 Bit	 00000081 Para	  Public  'CODE'	
 
 
 Procedures, parameters, and locals:
@@ -260,7 +298,9 @@ WriteStackFrame  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 WriteString  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteToFile  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteWindowsMsg  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
-main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 00000037 Public STDCALL
+main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 00000081 Public STDCALL
+  AddNumbers . . . . . . . . . .	L Near	 00000062 _TEXT	
+  ExitProgram  . . . . . . . . .	L Near	 0000007A _TEXT	
 printf . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 scanf  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 wsprintfA  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
@@ -322,6 +362,7 @@ FILE_WRITE_DATA  . . . . . . . .	Number	 00000002h
 FOCUS_EVENT  . . . . . . . . . .	Number	 00000010h   
 FORMAT_MESSAGE_ALLOCATE_BUFFER .	Number	 00000100h   
 FORMAT_MESSAGE_FROM_SYSTEM . . .	Number	 00001000h   
+FirstInput . . . . . . . . . . .	Byte	 0000002E _DATA	
 FormatMessage  . . . . . . . . .	Text   	 FormatMessageA
 GENERIC_ALL  . . . . . . . . . .	Number	 10000000h   
 GENERIC_EXECUTE  . . . . . . . .	Number	 20000000h   
@@ -347,8 +388,7 @@ IDTIMEOUT  . . . . . . . . . . .	Number	 00007D00h
 IDTRYAGAIN . . . . . . . . . . .	Number	 0000000Ah   
 IDYES  . . . . . . . . . . . . .	Number	 00000006h   
 INVALID_HANDLE_VALUE . . . . . .	Number	 -00000001h   
-InputBuffer  . . . . . . . . . .	Byte	 00000000 _DATA	
-IntroMessage . . . . . . . . . .	Byte	 00000064 _DATA	
+IntroMessage . . . . . . . . . .	Byte	 00000000 _DATA	
 KBDOWN_FLAG  . . . . . . . . . .	Number	 00000001h   
 KEY_EVENT  . . . . . . . . . . .	Number	 00000001h   
 KEY_MASKS  . . . . . . . . . . .	Number	 0000001Fh   
@@ -385,18 +425,20 @@ NULL . . . . . . . . . . . . . .	Number	 00000000h
 NUMLOCK_ON . . . . . . . . . . .	Number	 00000020h   
 OPEN_ALWAYS  . . . . . . . . . .	Number	 00000004h   
 OPEN_EXISTING  . . . . . . . . .	Number	 00000003h   
-OperatorSelection  . . . . . . .	Byte	 0000007A _DATA	
+OperatorMessage  . . . . . . . .	Byte	 00000014 _DATA	
 PeekConsoleInput . . . . . . . .	Text   	 PeekConsoleInputA
 RIGHT_ALT_PRESSED  . . . . . . .	Number	 00000001h   
 RIGHT_CTRL_PRESSED . . . . . . .	Number	 00000004h   
 ReadConsoleInput . . . . . . . .	Text   	 ReadConsoleInputA
 ReadConsole  . . . . . . . . . .	Text   	 ReadConsoleA
+ResultMessage  . . . . . . . . .	Byte	 00000059 _DATA	
 SCROLLLOCK_ON  . . . . . . . . .	Number	 00000040h   
 SHIFT_MASK . . . . . . . . . . .	Number	 00000010h   
 SHIFT_PRESSED  . . . . . . . . .	Number	 00000010h   
 STD_ERROR_HANDLE . . . . . . . .	Number	 -0000000Ch   
 STD_INPUT_HANDLE . . . . . . . .	Number	 -0000000Ah   
 STD_OUTPUT_HANDLE  . . . . . . .	Number	 -0000000Bh   
+SecondInput  . . . . . . . . . .	Byte	 00000043 _DATA	
 SetConsoleTitle  . . . . . . . .	Text   	 SetConsoleTitleA
 TAB  . . . . . . . . . . . . . .	Number	 00000009h   
 TRUE . . . . . . . . . . . . . .	Number	 00000001h   
